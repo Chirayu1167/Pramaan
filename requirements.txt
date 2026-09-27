@@ -1,0 +1,9 @@
+Flask==3.0.3
+pypdf==6.16.2
+reportlab>=4.0.0
+pqcrypto==1.0.0
+cryptography>=44.0.0
+Pillow==12.2.0
+numpy==2.2.5
+opencv-python==5.0.0.93
+pymupdf==1.28.2

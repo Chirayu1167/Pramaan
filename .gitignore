@@ -1,0 +1,15 @@
+# Runtime state: keys, ledger, copies, device identity (regenerable, secret)
+data/
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+# Generated demo artifacts (regenerable via demo*.py)
+demo_output/
+demo_output_attested/
+# Local robustness re-runs overwrite this; keep the committed baseline
+# docs_robustness.json  (kept intentionally - UI serves it)
+# Editors / OS
+.vscode/
+desktop.ini
+Thumbs.db
