@@ -161,63 +161,47 @@
   }
   window.showView = showView;
 
-  // Safe navigation listeners
-  function initNavigation() {
-    document.querySelectorAll(".nav-item").forEach((b) => {
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        const view = b.dataset.view || b.getAttribute("data-view");
-        if (view) showView(view);
-      });
-    });
-
-    on("nav", "click", (e) => {
-      const btn = e.target.closest(".nav-item");
-      if (btn) {
-        const view = btn.dataset.view || btn.getAttribute("data-view");
-        if (view) showView(view);
+  // ---- Unified document-level click delegation ----
+  document.addEventListener("click", (e) => {
+    // 1. Nav-item buttons (sidebar navigation)
+    const navBtn = e.target.closest(".nav-item[data-view]");
+    if (navBtn) {
+      showView(navBtn.dataset.view);
+      return;
+    }
+    // 2. data-goto shortcut links
+    const gotoBtn = e.target.closest("[data-goto]");
+    if (gotoBtn) {
+      showView(gotoBtn.dataset.goto);
+      return;
+    }
+    // 3. Close mobile sidebar when clicking outside
+    const sb = document.getElementById("sidebar");
+    if (sb && sb.classList.contains("is-open")) {
+      if (!sb.contains(e.target) && !e.target.closest("#menu-toggle")) {
+        sb.classList.remove("is-open");
       }
-    });
+    }
+  });
 
-    document.querySelectorAll("[data-goto]").forEach((b) => {
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        const view = b.dataset.goto || b.getAttribute("data-goto");
-        if (view) showView(view);
-      });
-    });
-  }
-
-  initNavigation();
-
-  on("menu-toggle", "click", () => {
+  // Mobile menu toggle
+  on("menu-toggle", "click", (e) => {
+    e.stopPropagation();
     const sb = document.getElementById("sidebar");
     if (sb) sb.classList.toggle("is-open");
   });
 
   // ---------- status / overview ----------
-  function setServerStatus(state, text) {
-    const badge = document.getElementById("server-status-badge");
-    const label = document.getElementById("server-status-text");
-    if (badge && label) {
-      badge.className = `server-status-pill is-${state}`;
-      label.textContent = text;
-    }
-  }
-
   async function loadStatus() {
     const d = await api("GET", "/api/status");
     if (d.error) {
-      setServerStatus("connecting", "Connecting (Waking up cloud backend…)");
       const ledgerWrap = document.getElementById("overview-ledger-wrap");
       if (ledgerWrap && !STATE.status) {
-        ledgerWrap.innerHTML = `<div class="empty-state"><div class="spinner dark"></div><span>Connecting to Render backend… please wait a few seconds.</span></div>`;
+        ledgerWrap.innerHTML = `<div class="empty-state"><span>No events yet — run Initialize or Demo first.</span></div>`;
       }
-      setTimeout(() => loadStatus(), 3000);
+      setTimeout(() => loadStatus(), 6000);
       return false;
     }
-
-    setServerStatus("online", "Connected (Render Cloud)");
     STATE.status = d;
     STATE.docIndex = {};
     (d.documents || []).forEach((doc) => (STATE.docIndex[doc.doc_id] = doc));

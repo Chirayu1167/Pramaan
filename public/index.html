@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PRAMAAN — Proof of Decryption Origin (SIH 26237)</title>
-<link rel="stylesheet" href="css/app.css?v=3.5">
+<link rel="stylesheet" href="css/app.css?v=4.0">
 </head>
 <body>
 <div class="app-shell">
@@ -80,10 +80,6 @@
         <span class="status-label">Ledger integrity</span>
         <span class="chip chip-neutral" id="sb-ledger-chip">—</span>
       </div>
-      <div class="status-row" style="margin-bottom:0">
-        <span class="status-label">Backend</span>
-        <span class="build-tag" id="sb-backend-tag">Cloud &bull; Render</span>
-      </div>
     </div>
   </aside>
 
@@ -96,23 +92,19 @@
         </button>
         <span class="topbar-crumb" id="crumb">PRAMAAN / Overview</span>
       </div>
-      <div class="topbar-right" style="display:flex;align-items:center;gap:12px;">
-        <span class="server-status-pill is-connecting" id="server-status-badge">
-          <span class="dot"></span>
-          <span id="server-status-text">Connecting to Backend…</span>
-        </span>
+      <div class="topbar-right">
         <div id="auth-signed-out" style="display:flex;align-items:center;gap:8px;">
-          <button class="btn btn-sm btn-primary" id="btn-open-auth-modal" style="padding:6px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;">
+          <button class="btn btn-sm btn-primary" id="btn-open-auth-modal">
             <svg class="svg-icon" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Sign In / Register
+            Sign In
           </button>
         </div>
         <div id="auth-signed-in" style="display:none;align-items:center;gap:8px;">
           <span class="chip chip-neutral" id="user-display-email" style="font-size:12px;display:flex;align-items:center;gap:6px;">
-            <span class="dot" style="background:#10b981;width:6px;height:6px;border-radius:50%"></span>
+            <span style="background:#10b981;width:6px;height:6px;border-radius:50%;display:inline-block;"></span>
             <span id="user-email-text">User</span>
           </span>
-          <button class="btn btn-ghost btn-sm" id="btn-auth-logout" style="padding:3px 8px;font-size:11.5px;color:#ef4444;" title="Sign out and revoke session">
+          <button class="btn btn-ghost btn-sm" id="btn-auth-logout" style="padding:3px 8px;font-size:11.5px;color:#ef4444;" title="Sign out">
             Sign Out
           </button>
         </div>
@@ -541,7 +533,7 @@
 
 <div class="toast-stack" id="toast-stack"></div>
 
-<script src="js/app.js?v=3.5"></script>
+<script src="js/app.js?v=4.0"></script>
 
 <!-- Firebase App, Auth, Firestore & Session SDK -->
 <script type="module">
