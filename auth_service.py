@@ -67,8 +67,9 @@ def get_firestore_client():
 def verify_id_token(id_token: str) -> Dict[str, Any]:
     """Verifies Firebase ID token (from Google Auth or Email/Password)."""
     get_firestore_client()
-    decoded_token = auth.verify_id_token(id_token)
-    return decoded_token
+    if not firebase_admin._apps:
+        raise RuntimeError("Firebase Admin SDK is not initialized. Please configure credentials.")
+    return auth.verify_id_token(id_token)
 
 
 def register_user_session(

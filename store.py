@@ -246,6 +246,13 @@ def save_recipients(recips: dict) -> None:
     _save_json(RECIPIENTS_FILE, recips)
 
 
+def _vault_path(base: str, name: str) -> str:
+    # Flat filenames only — no subdirectories, no traversal.
+    if not name or "/" in name or "\\" in name or ".." in name:
+        raise ValueError(f"invalid vault name {name!r}")
+    return os.path.join(base, name + ".sk")
+
+
 # ---- private keys (server-side only, never returned by any API) ----
 # Encrypted at rest: passphrase -> scrypt -> 32-byte key -> AES-256-GCM
 # (symmetric only, same primitive as symcrypto's document encryption). Each
@@ -344,26 +351,33 @@ def save_documents(docs: dict) -> None:
 def save_blob(filename: str, data: bytes) -> str:
     """Save bytes under DOCS_DIR, return the stored filename."""
     ensure_dirs()
-    path = os.path.join(DOCS_DIR, filename)
+    safe_name = os.path.basename(filename)
+    if not safe_name or safe_name in (".", ".."):
+        raise ValueError("invalid blob filename")
+    path = os.path.join(DOCS_DIR, safe_name)
     with open(path, "wb") as f:
         f.write(data)
-    return filename
+    return safe_name
 
 
 def load_blob(filename: str) -> bytes:
-    with open(os.path.join(DOCS_DIR, filename), "rb") as f:
+    safe_name = os.path.basename(filename)
+    path = os.path.join(DOCS_DIR, safe_name)
+    with open(path, "rb") as f:
         return f.read()
 
 
 # ---- watermarked copies: data/copies/<event_id>.pdf ----
 def save_copy(event_id: str, data: bytes) -> None:
     ensure_dirs()
-    with open(os.path.join(COPIES_DIR, f"{event_id}.pdf"), "wb") as f:
+    safe_id = os.path.basename(event_id)
+    with open(os.path.join(COPIES_DIR, f"{safe_id}.pdf"), "wb") as f:
         f.write(data)
 
 
 def load_copy(event_id: str) -> bytes:
-    with open(os.path.join(COPIES_DIR, f"{event_id}.pdf"), "rb") as f:
+    safe_id = os.path.basename(event_id)
+    with open(os.path.join(COPIES_DIR, f"{safe_id}.pdf"), "rb") as f:
         return f.read()
 
 
