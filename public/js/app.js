@@ -136,6 +136,7 @@
     ledger: "PRAMAAN / Integrity Ledger",
     robustness: "PRAMAAN / Screenshot Robustness",
     "how-it-works": "PRAMAAN / How It Works",
+    "history": "PRAMAAN / My History",
   };
 
   function showView(name) {
@@ -386,6 +387,9 @@
     if (d.error) { toast(d.error, "alert"); appendLog(`[FAIL] init: ${d.error}`); return; }
     toast(`Initialized ${d.recipients.length} recipients`);
     appendLog(`[ok] init: recipients = ${d.recipients.join(", ")}`);
+    if (window.pramaanHistory) {
+      window.pramaanHistory.record("init", { recipients: d.recipients.join(", ") });
+    }
     await loadStatus();
   });
 
@@ -419,6 +423,9 @@
     }
     (d.steps || []).forEach((s) => appendLog(`[${s.ok ? "ok" : "FAIL"}] ${s.name}: ${s.detail}`));
     toast("Full demo completed");
+    if (window.pramaanHistory) {
+      window.pramaanHistory.record("demo", { steps: d.steps ? d.steps.length : 0 });
+    }
     await loadStatus();
     await loadLedger();
   });
@@ -501,6 +508,14 @@
         </div>`;
     }
     toast("Document encrypted");
+    if (window.pramaanHistory) {
+      window.pramaanHistory.record("encrypt", {
+        filename: d.filename || encryptFile.name,
+        doc_id: d.doc_id,
+        document_hash: d.document_hash,
+        recipients: d.recipients ? d.recipients.join(", ") : ""
+      });
+    }
     await loadStatus();
   });
 
@@ -536,6 +551,15 @@
     if (bannerEl) bannerEl.innerHTML = banner("success", "Authorized release recorded as PENDING — needs 2 custodian witnesses.");
     renderAttestedRelease(d);
     toast("Attested release recorded (PENDING)");
+    if (window.pramaanHistory) {
+      window.pramaanHistory.record("decrypt", {
+        doc_id: d.doc_id,
+        recipient_id: d.recipient_id,
+        event_id: d.event_id,
+        block_index: d.block_index,
+        status: d.status || "PENDING"
+      });
+    }
     await loadStatus();
     await loadLedger();
   });
@@ -676,6 +700,14 @@
       return;
     }
     if (resEl) resEl.innerHTML = renderVerdict(d);
+    if (window.pramaanHistory) {
+      window.pramaanHistory.record("investigate", {
+        filename: investigateFile.name,
+        result: d.match ? "match" : "no_match",
+        recipient: d.recipient || "",
+        event_id: d.event_id || ""
+      });
+    }
   });
 
   // ---------- Screenshot investigate ----------
@@ -729,6 +761,14 @@
       return;
     }
     if (resEl) resEl.innerHTML = renderVerdict(d);
+    if (window.pramaanHistory) {
+      window.pramaanHistory.record("screenshot", {
+        filename: shotFile.name,
+        result: d.match ? "match" : "no_match",
+        recipient: d.recipient || "",
+        event_id: d.event_id || ""
+      });
+    }
   });
 
   // ---------- Robustness matrix ----------

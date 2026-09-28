@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PRAMAAN — Proof of Decryption Origin (SIH 26237)</title>
-<link rel="stylesheet" href="css/app.css?v=4.0">
+<link rel="stylesheet" href="css/app.css?v=4.1">
 </head>
 <body>
 <div class="app-shell">
@@ -72,6 +72,10 @@
         <button class="nav-item" data-view="how-it-works">
           <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5v.01"/></svg>
           <span>How It Works</span>
+        </button>
+        <button class="nav-item" data-view="history" id="nav-history">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+          <span>My History</span>
         </button>
       </nav>
     </div>
@@ -482,6 +486,66 @@
       </div>
     </section>
 
+    <!-- ===== HISTORY ===== -->
+    <section class="view" data-view="history" id="view-history">
+      <div class="view-head">
+        <div>
+          <div class="view-eyebrow">PERSONAL AUDIT TRAIL</div>
+          <h1 class="view-title">My History</h1>
+          <p class="view-desc">Every action you have performed — encryptions, decryptions, and forensic investigations — stored in your Firestore account and available across devices.</p>
+        </div>
+        <div class="view-actions">
+          <button class="btn" id="btn-clear-history">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            Clear history
+          </button>
+          <button class="btn btn-primary" id="btn-reload-history">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M5.5 15a7 7 0 0 0 12.3 2.6M18.5 9A7 7 0 0 0 6.2 6.4"/></svg>
+            Reload
+          </button>
+        </div>
+      </div>
+
+      <div id="history-signin-prompt" class="banner banner-info" style="display:none">
+        <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5v.01"/></svg>
+        <span>Sign in to record and view your personal history across devices.</span>
+      </div>
+
+      <div class="metric-grid" id="history-stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px;display:none">
+        <div class="metric">
+          <div class="metric-top"><span class="metric-label">ENCRYPTIONS</span>
+            <div class="metric-icon"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div></div>
+          <div class="metric-value" id="hist-m-enc">0</div>
+          <div class="metric-note">Documents sealed</div>
+        </div>
+        <div class="metric">
+          <div class="metric-top"><span class="metric-label">DECRYPTIONS</span>
+            <div class="metric-icon"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.8"/></svg></div></div>
+          <div class="metric-value" id="hist-m-dec">0</div>
+          <div class="metric-note">Attested releases</div>
+        </div>
+        <div class="metric">
+          <div class="metric-top"><span class="metric-label">INVESTIGATIONS</span>
+            <div class="metric-icon"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg></div></div>
+          <div class="metric-value" id="hist-m-inv">0</div>
+          <div class="metric-note">Forensic analyses</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Activity log</h2><p class="card-sub">Most recent first &bull; Stored in Firestore per user</p></div>
+        </div>
+        <div class="table-wrap" id="history-table-wrap">
+          <div class="empty-state">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+            <strong>No history yet</strong>
+            <span>Actions you perform while signed in are saved here.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </div>
 </div>
 
@@ -533,22 +597,34 @@
 
 <div class="toast-stack" id="toast-stack"></div>
 
-<script src="js/app.js?v=4.0"></script>
+<script src="js/app.js?v=4.1"></script>
 
 <!-- Firebase App, Auth, Firestore & Session SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
-  import { 
-    getAuth, 
-    GoogleAuthProvider, 
-    signInWithPopup, 
-    signInWithEmailAndPassword, 
-    createUserWithEmailAndPassword, 
-    signOut, 
-    onAuthStateChanged 
+  import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    deleteDoc,
+    doc,
+    setDoc,
+    query,
+    orderBy,
+    limit,
+    serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyC5N6PyS_42nYleXas_eUA5PhT3nEDwkXs",
@@ -566,7 +642,163 @@
   const db = getFirestore(firebaseApp);
   const googleProvider = new GoogleAuthProvider();
 
-  // DOM Elements
+  let currentUser = null;
+
+  // ===== HISTORY HELPERS =====
+  function historyColRef(uid) {
+    return collection(db, "users", uid, "history");
+  }
+
+  async function writeHistoryEvent(uid, type, meta) {
+    try {
+      await addDoc(historyColRef(uid), {
+        type,
+        ...meta,
+        uid,
+        createdAt: serverTimestamp(),
+        clientTime: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn("History write failed:", err);
+    }
+  }
+
+  async function loadHistory(uid) {
+    try {
+      const q = query(historyColRef(uid), orderBy("createdAt", "desc"), limit(200));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+      console.warn("History load failed:", err);
+      return [];
+    }
+  }
+
+  async function clearHistory(uid) {
+    try {
+      const snap = await getDocs(historyColRef(uid));
+      const dels = snap.docs.map(d => deleteDoc(doc(db, "users", uid, "history", d.id)));
+      await Promise.all(dels);
+    } catch (err) {
+      console.warn("History clear failed:", err);
+    }
+  }
+
+  function renderHistoryView(entries) {
+    const wrap = document.getElementById("history-table-wrap");
+    const stats = document.getElementById("history-stats");
+    const prompt = document.getElementById("history-signin-prompt");
+
+    if (!currentUser) {
+      if (prompt) prompt.style.display = "flex";
+      if (stats) stats.style.display = "none";
+      if (wrap) wrap.innerHTML = `<div class="empty-state">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+        <strong>Sign in to view your history</strong>
+        <span>Your activity is stored per account in Firestore.</span>
+      </div>`;
+      return;
+    }
+    if (prompt) prompt.style.display = "none";
+
+    const enc = entries.filter(e => e.type === "encrypt").length;
+    const dec = entries.filter(e => e.type === "decrypt").length;
+    const inv = entries.filter(e => e.type === "investigate" || e.type === "screenshot").length;
+
+    if (stats) {
+      stats.style.display = "grid";
+      const mE = document.getElementById("hist-m-enc");
+      const mD = document.getElementById("hist-m-dec");
+      const mI = document.getElementById("hist-m-inv");
+      if (mE) mE.textContent = enc;
+      if (mD) mD.textContent = dec;
+      if (mI) mI.textContent = inv;
+    }
+
+    if (!wrap) return;
+    if (!entries.length) {
+      wrap.innerHTML = `<div class="empty-state">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+        <strong>No history yet</strong>
+        <span>Perform an encrypt, decrypt or investigate action to see it here.</span>
+      </div>`;
+      return;
+    }
+
+    const typeIcon = {
+      encrypt: "🔒",
+      decrypt: "🔓",
+      investigate: "🔍",
+      screenshot: "📷",
+      demo: "▶",
+      init: "⚙"
+    };
+    const typeBadge = {
+      encrypt: "chip chip-blue",
+      decrypt: "chip chip-green",
+      investigate: "chip chip-amber",
+      screenshot: "chip chip-amber",
+      demo: "chip chip-neutral",
+      init: "chip chip-neutral"
+    };
+
+    const rows = entries.map(e => {
+      const time = e.clientTime ? new Date(e.clientTime).toLocaleString() : (e.createdAt?.seconds ? new Date(e.createdAt.seconds * 1000).toLocaleString() : "—");
+      const icon = typeIcon[e.type] || "•";
+      const badge = typeBadge[e.type] || "chip chip-neutral";
+      const label = e.type.charAt(0).toUpperCase() + e.type.slice(1);
+      const detail = e.filename || e.doc_id || e.recipient_id || e.event_id || e.result || "—";
+      const extra = e.recipients ? `${e.recipients} recipients` : (e.event_id ? `Event: ${e.event_id.slice(0,10)}…` : "");
+      return `<tr>
+        <td><span class="${badge}" style="font-size:11px">${icon} ${label}</span></td>
+        <td class="cell-title">${detail}</td>
+        <td class="text-muted" style="font-size:12px">${extra}</td>
+        <td class="cell-mono" style="font-size:11px">${time}</td>
+      </tr>`;
+    }).join("");
+
+    wrap.innerHTML = `<table class="data-table">
+      <thead><tr><th>Action</th><th>Detail</th><th>Extra</th><th>Time</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  }
+
+  // ===== PUBLIC BRIDGE (used by app.js) =====
+  window.pramaanHistory = {
+    record: async (type, meta = {}) => {
+      if (!currentUser) return;
+      await writeHistoryEvent(currentUser.uid, type, meta);
+      // Badge on nav item
+      const nb = document.getElementById("nav-history");
+      if (nb) nb.dataset.badge = "new";
+    },
+    reload: async () => {
+      if (!currentUser) { renderHistoryView([]); return; }
+      const entries = await loadHistory(currentUser.uid);
+      renderHistoryView(entries);
+    }
+  };
+
+  // Register history view reload on nav click
+  document.addEventListener("click", async (e) => {
+    const nb = e.target.closest("[data-view='history']");
+    if (nb) {
+      if (window.pramaanHistory) await window.pramaanHistory.reload();
+    }
+  });
+
+  // Reload + clear buttons
+  document.getElementById("btn-reload-history")?.addEventListener("click", async () => {
+    if (window.pramaanHistory) await window.pramaanHistory.reload();
+  });
+  document.getElementById("btn-clear-history")?.addEventListener("click", async () => {
+    if (!currentUser) return;
+    if (!confirm("Clear all your history? This cannot be undone.")) return;
+    await clearHistory(currentUser.uid);
+    if (window.pramaanHistory) await window.pramaanHistory.reload();
+  });
+
+  // ===== AUTH DOM ELEMENTS =====
   const modal = document.getElementById("auth-modal");
   const btnOpenModal = document.getElementById("btn-open-auth-modal");
   const sbBtnSignin = document.getElementById("sb-btn-signin");
@@ -579,11 +811,9 @@
   const inputEmail = document.getElementById("auth-input-email");
   const inputPassword = document.getElementById("auth-input-password");
   const errorMsg = document.getElementById("auth-error-msg");
-
   const signedOutRow = document.getElementById("auth-signed-out");
   const signedInRow = document.getElementById("auth-signed-in");
   const userEmailText = document.getElementById("user-email-text");
-  
   const sbLoggedOut = document.getElementById("sb-auth-logged-out");
   const sbLoggedIn = document.getElementById("sb-auth-logged-in");
   const sbAvatar = document.getElementById("sb-avatar");
@@ -591,27 +821,13 @@
   const sbSessionText = document.getElementById("sb-session-text");
 
   function showError(msg) {
-    if (errorMsg) {
-      errorMsg.textContent = msg;
-      errorMsg.style.display = "block";
-    }
+    if (errorMsg) { errorMsg.textContent = msg; errorMsg.style.display = "block"; }
   }
-
   function clearError() {
-    if (errorMsg) {
-      errorMsg.textContent = "";
-      errorMsg.style.display = "none";
-    }
+    if (errorMsg) { errorMsg.textContent = ""; errorMsg.style.display = "none"; }
   }
-
-  function openModal() {
-    clearError();
-    if (modal) modal.style.display = "flex";
-  }
-
-  function closeModal() {
-    if (modal) modal.style.display = "none";
-  }
+  function openModal() { clearError(); if (modal) modal.style.display = "flex"; }
+  function closeModal() { if (modal) modal.style.display = "none"; }
 
   if (btnOpenModal) btnOpenModal.addEventListener("click", openModal);
   if (sbBtnSignin) sbBtnSignin.addEventListener("click", openModal);
@@ -621,7 +837,6 @@
     ? "https://parmaan-5768.onrender.com"
     : "";
 
-  // Sync token and record active session with Backend & Firestore
   async function syncSession(user) {
     try {
       const idToken = await user.getIdToken(true);
@@ -642,6 +857,7 @@
 
   // Auth State Listener
   onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
     if (user) {
       closeModal();
       const displayName = user.displayName || user.email.split("@")[0];
@@ -650,22 +866,31 @@
       if (signedOutRow) signedOutRow.style.display = "none";
       if (signedInRow) signedInRow.style.display = "flex";
       if (userEmailText) userEmailText.textContent = user.email;
-
       if (sbLoggedOut) sbLoggedOut.style.display = "none";
       if (sbLoggedIn) sbLoggedIn.style.display = "block";
       if (sbAvatar) sbAvatar.textContent = initial;
       if (sbUsername) sbUsername.textContent = displayName;
       if (sbSessionText) sbSessionText.textContent = "Session: active";
 
+      // Record login event
+      await writeHistoryEvent(user.uid, "login", { email: user.email, displayName });
+
+      // If history view is active, reload it
+      const hView = document.getElementById("view-history");
+      if (hView && hView.classList.contains("is-active")) {
+        const entries = await loadHistory(user.uid);
+        renderHistoryView(entries);
+      }
+
       await syncSession(user);
     } else {
+      currentUser = null;
       if (signedOutRow) signedOutRow.style.display = "flex";
       if (signedInRow) signedInRow.style.display = "none";
-
       if (sbLoggedOut) sbLoggedOut.style.display = "block";
       if (sbLoggedIn) sbLoggedIn.style.display = "none";
-
       localStorage.removeItem("pramaan_session_id");
+      renderHistoryView([]);
     }
   });
 
@@ -673,12 +898,8 @@
   if (btnGoogle) {
     btnGoogle.addEventListener("click", async () => {
       clearError();
-      try {
-        await signInWithPopup(auth, googleProvider);
-        closeModal();
-      } catch (err) {
-        showError(err.message);
-      }
+      try { await signInWithPopup(auth, googleProvider); closeModal(); }
+      catch (err) { showError(err.message); }
     });
   }
 
@@ -688,16 +909,9 @@
       clearError();
       const email = inputEmail.value.trim();
       const password = inputPassword.value;
-      if (!email || !password) {
-        showError("Please enter both email and password.");
-        return;
-      }
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        closeModal();
-      } catch (err) {
-        showError(err.message);
-      }
+      if (!email || !password) { showError("Please enter both email and password."); return; }
+      try { await signInWithEmailAndPassword(auth, email, password); closeModal(); }
+      catch (err) { showError(err.message); }
     });
   }
 
@@ -707,16 +921,9 @@
       clearError();
       const email = inputEmail.value.trim();
       const password = inputPassword.value;
-      if (!email || password.length < 6) {
-        showError("Password must be at least 6 characters.");
-        return;
-      }
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        closeModal();
-      } catch (err) {
-        showError(err.message);
-      }
+      if (!email || password.length < 6) { showError("Password must be at least 6 characters."); return; }
+      try { await createUserWithEmailAndPassword(auth, email, password); closeModal(); }
+      catch (err) { showError(err.message); }
     });
   }
 
@@ -740,3 +947,4 @@
 </script>
 </body>
 </html>
+
