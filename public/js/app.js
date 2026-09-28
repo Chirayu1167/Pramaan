@@ -625,9 +625,27 @@
       : `<span class="chip chip-red">${ICON.x}INVALID</span>`;
   }
 
-  async function loadStatus() {
+  function setServerStatus(state, text) {
+    const badge = document.getElementById("server-status-badge");
+    const label = document.getElementById("server-status-text");
+    if (badge && label) {
+      badge.className = `server-status-pill is-${state}`;
+      label.textContent = text;
+    }
+  }
+
+  async function loadStatus(silent = false) {
     const d = await api("GET", "/api/status");
-    if (d.error) { toast(d.error, "alert"); return; }
+    if (d.error) {
+      setServerStatus("connecting", "Connecting (Waking up cloud backend…)");
+      const ledgerWrap = document.getElementById("overview-ledger-wrap");
+      if (ledgerWrap && !STATE.status) {
+        ledgerWrap.innerHTML = `<div class="empty-state"><div class="spinner dark"></div><span>Connecting to Render backend… please wait a few seconds.</span></div>`;
+      }
+      setTimeout(() => loadStatus(true), 3000);
+      return false;
+    }
+    setServerStatus("online", "Connected (Render Cloud)");
     STATE.status = d;
     STATE.docIndex = {};
     (d.documents || []).forEach((doc) => (STATE.docIndex[doc.doc_id] = doc));
@@ -651,15 +669,17 @@
     // populate decrypt selects
     const docSel = document.getElementById("select-doc");
     const recSel = document.getElementById("select-recipient");
-    const prevDoc = docSel.value, prevRec = recSel.value;
-    docSel.innerHTML = (d.documents || []).length
-      ? (d.documents || []).map((x) => `<option value="${esc(x.doc_id)}">${esc(x.filename)} (${esc(short(x.doc_id, 8, 0))})</option>`).join("")
-      : `<option value="">No documents encrypted yet</option>`;
-    recSel.innerHTML = (d.recipients || []).length
-      ? (d.recipients || []).map((x) => `<option value="${esc(x)}">${esc(x)}</option>`).join("")
-      : `<option value="">No recipients enrolled</option>`;
-    if ((d.documents || []).some((x) => x.doc_id === prevDoc)) docSel.value = prevDoc;
-    if ((d.recipients || []).includes(prevRec)) recSel.value = prevRec;
+    if (docSel && recSel) {
+      const prevDoc = docSel.value, prevRec = recSel.value;
+      docSel.innerHTML = (d.documents || []).length
+        ? (d.documents || []).map((x) => `<option value="${esc(x.doc_id)}">${esc(x.filename)} (${esc(short(x.doc_id, 8, 0))})</option>`).join("")
+        : `<option value="">No documents encrypted yet</option>`;
+      recSel.innerHTML = (d.recipients || []).length
+        ? (d.recipients || []).map((x) => `<option value="${esc(x)}">${esc(x)}</option>`).join("")
+        : `<option value="">No recipients enrolled</option>`;
+      if ((d.documents || []).some((x) => x.doc_id === prevDoc)) docSel.value = prevDoc;
+      if ((d.recipients || []).includes(prevRec)) recSel.value = prevRec;
+    }
     const revRec = document.getElementById("select-revoke-recipient");
     const revCus = document.getElementById("select-revoke-custodian");
     if (revRec && revCus) {
@@ -670,11 +690,11 @@
         ? (d.custodians || []).map((x) => `<option value="${esc(x)}">${esc(x)}</option>`).join("")
         : `<option value="">No custodians</option>`;
     }
+    return true;
   }
 
   async function loadLedger() {
     const d = await api("GET", "/api/ledger");
-    if (d.error) { toast(d.error, "alert"); return; }
     STATE.ledger = Array.isArray(d) ? d : [];
     renderOverviewLedger();
     if (document.querySelector('.view[data-view="ledger"]').classList.contains("is-active")) renderLedgerTable();

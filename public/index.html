@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PS26237 — Cryptographic Attribution &amp; Decryption Provenance</title>
-<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/app.css?v=3.0">
 </head>
 <body>
 <div class="app-shell">
@@ -17,10 +17,33 @@
           <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 10-4-1.6-7-5.4-7-10V6l7-3z"/><path d="M9.5 12l1.8 1.8L15 10"/></svg>
         </div>
         <div class="brand-text">
-          <span class="brand-title">PS26237</span>
+          <span class="brand-title">PRAMAAN</span>
           <span class="brand-sub">DECRYPTION PROVENANCE</span>
         </div>
       </div>
+
+      <!-- Prominent User Security & Authentication Box in Sidebar -->
+      <div class="sidebar-auth-box">
+        <div id="sb-auth-logged-out">
+          <button class="btn-auth-signin" id="sb-btn-signin">
+            <svg class="svg-icon" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Sign In / Register
+          </button>
+        </div>
+        <div id="sb-auth-logged-in" style="display:none;">
+          <div class="auth-user-header">
+            <div class="auth-user-avatar" id="sb-avatar">U</div>
+            <div class="auth-user-info">
+              <div class="auth-user-name" id="sb-username">User</div>
+              <div class="auth-user-session" id="sb-session-text">Session: active</div>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="sb-btn-logout" style="width:100%;color:#ef4444;border:1px solid rgba(239,68,68,0.2);padding:4px 8px;font-size:11px;margin-top:6px;">
+            Sign Out
+          </button>
+        </div>
+      </div>
+
       <nav class="nav" id="nav">
         <button class="nav-item" data-view="overview">
           <svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
@@ -54,8 +77,8 @@
         <span class="chip chip-neutral" id="sb-ledger-chip">—</span>
       </div>
       <div class="status-row" style="margin-bottom:0">
-        <span class="status-label">Mode</span>
-        <span class="build-tag">Local &bull; No network egress</span>
+        <span class="status-label">Backend</span>
+        <span class="build-tag" id="sb-backend-tag">Cloud &bull; Render</span>
       </div>
     </div>
   </aside>
@@ -67,26 +90,28 @@
         <button class="btn btn-ghost btn-sm menu-btn" id="menu-toggle" aria-label="Toggle navigation">
           <svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
-        <span class="topbar-crumb" id="crumb">PS26237 / Overview</span>
+        <span class="topbar-crumb" id="crumb">PRAMAAN / Overview</span>
       </div>
       <div class="topbar-right" style="display:flex;align-items:center;gap:12px;">
+        <span class="server-status-pill is-connecting" id="server-status-badge">
+          <span class="dot"></span>
+          <span id="server-status-text">Connecting to Backend…</span>
+        </span>
         <div id="auth-signed-out" style="display:flex;align-items:center;gap:8px;">
-          <button class="btn btn-sm btn-primary" id="btn-open-auth-modal" style="padding:4px 12px;font-size:12px;">
+          <button class="btn btn-sm btn-primary" id="btn-open-auth-modal" style="padding:6px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;">
             <svg class="svg-icon" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             Sign In / Register
           </button>
         </div>
         <div id="auth-signed-in" style="display:none;align-items:center;gap:8px;">
-          <span class="chip chip-neutral" id="user-display-email" style="font-size:12px;display:flex;align-items:center;gap:4px;">
+          <span class="chip chip-neutral" id="user-display-email" style="font-size:12px;display:flex;align-items:center;gap:6px;">
             <span class="dot" style="background:#10b981;width:6px;height:6px;border-radius:50%"></span>
             <span id="user-email-text">User</span>
           </span>
-          <span class="chip chip-neutral" id="user-session-pill" style="font-size:11px;opacity:0.8;" title="Active Firestore Session ID">Sess: —</span>
-          <button class="btn btn-ghost btn-sm" id="btn-auth-logout" style="padding:2px 8px;font-size:11px;" title="Sign out and revoke session">
+          <button class="btn btn-ghost btn-sm" id="btn-auth-logout" style="padding:3px 8px;font-size:11.5px;color:#ef4444;" title="Sign out and revoke session">
             Sign Out
           </button>
         </div>
-        <span class="offline-pill"><span class="dot" style="width:6px;height:6px"></span>ONLINE / CLOUD</span>
       </div>
     </header>
 
@@ -412,7 +437,7 @@
 
 <div class="toast-stack" id="toast-stack"></div>
 
-<script src="js/app.js"></script>
+<script src="js/app.js?v=3.0"></script>
 </body>
 </html> -->
 
@@ -423,7 +448,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PRAMAAN — Proof of Decryption Origin (SIH 26237)</title>
-<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/app.css?v=3.0">
 </head>
 <body>
 <div class="app-shell">
@@ -917,7 +942,7 @@
   </div>
 </div>
 
-<script src="js/app.js"></script>
+<script src="js/app.js?v=3.0"></script>
 
 <!-- Firebase App, Auth, Firestore & Session SDK -->
 <script type="module">
@@ -953,11 +978,13 @@
   // DOM Elements
   const modal = document.getElementById("auth-modal");
   const btnOpenModal = document.getElementById("btn-open-auth-modal");
+  const sbBtnSignin = document.getElementById("sb-btn-signin");
   const btnCloseModal = document.getElementById("btn-close-auth-modal");
   const btnGoogle = document.getElementById("btn-auth-google");
   const btnEmailSignIn = document.getElementById("btn-email-signin");
   const btnEmailSignUp = document.getElementById("btn-email-signup");
   const btnLogout = document.getElementById("btn-auth-logout");
+  const sbBtnLogout = document.getElementById("sb-btn-logout");
   const inputEmail = document.getElementById("auth-input-email");
   const inputPassword = document.getElementById("auth-input-password");
   const errorMsg = document.getElementById("auth-error-msg");
@@ -965,7 +992,12 @@
   const signedOutRow = document.getElementById("auth-signed-out");
   const signedInRow = document.getElementById("auth-signed-in");
   const userEmailText = document.getElementById("user-email-text");
-  const userSessionPill = document.getElementById("user-session-pill");
+  
+  const sbLoggedOut = document.getElementById("sb-auth-logged-out");
+  const sbLoggedIn = document.getElementById("sb-auth-logged-in");
+  const sbAvatar = document.getElementById("sb-avatar");
+  const sbUsername = document.getElementById("sb-username");
+  const sbSessionText = document.getElementById("sb-session-text");
 
   function showError(msg) {
     if (errorMsg) {
@@ -991,6 +1023,7 @@
   }
 
   if (btnOpenModal) btnOpenModal.addEventListener("click", openModal);
+  if (sbBtnSignin) sbBtnSignin.addEventListener("click", openModal);
   if (btnCloseModal) btnCloseModal.addEventListener("click", closeModal);
 
   const BACKEND_BASE = (window.location.hostname.includes("firebaseapp.com") || window.location.hostname.includes("web.app"))
@@ -1009,7 +1042,7 @@
       const data = await res.json();
       if (data.session_id) {
         localStorage.setItem("pramaan_session_id", data.session_id);
-        if (userSessionPill) userSessionPill.textContent = "Sess: " + data.session_id.substring(0, 8) + "…";
+        if (sbSessionText) sbSessionText.textContent = "Sess: " + data.session_id.substring(0, 8) + "…";
       }
     } catch (err) {
       console.warn("Session sync warning:", err);
@@ -1020,13 +1053,27 @@
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       closeModal();
+      const displayName = user.displayName || user.email.split("@")[0];
+      const initial = (displayName[0] || "U").toUpperCase();
+
       if (signedOutRow) signedOutRow.style.display = "none";
       if (signedInRow) signedInRow.style.display = "flex";
-      if (userEmailText) userEmailText.textContent = user.displayName || user.email;
+      if (userEmailText) userEmailText.textContent = user.email;
+
+      if (sbLoggedOut) sbLoggedOut.style.display = "none";
+      if (sbLoggedIn) sbLoggedIn.style.display = "block";
+      if (sbAvatar) sbAvatar.textContent = initial;
+      if (sbUsername) sbUsername.textContent = displayName;
+      if (sbSessionText) sbSessionText.textContent = "Session: active";
+
       await syncSession(user);
     } else {
       if (signedOutRow) signedOutRow.style.display = "flex";
       if (signedInRow) signedInRow.style.display = "none";
+
+      if (sbLoggedOut) sbLoggedOut.style.display = "block";
+      if (sbLoggedIn) sbLoggedIn.style.display = "none";
+
       localStorage.removeItem("pramaan_session_id");
     }
   });
@@ -1036,7 +1083,7 @@
     btnGoogle.addEventListener("click", async () => {
       clearError();
       try {
-        const result = await signInWithPopup(auth, googleProvider);
+        await signInWithPopup(auth, googleProvider);
         closeModal();
       } catch (err) {
         showError(err.message);
@@ -1083,21 +1130,22 @@
   }
 
   // Logout
-  if (btnLogout) {
-    btnLogout.addEventListener("click", async () => {
-      const sessionId = localStorage.getItem("pramaan_session_id");
-      if (sessionId) {
-        try {
-          await fetch(BACKEND_BASE + "/api/auth/logout", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sessionId })
-          });
-        } catch (e) {}
-      }
-      await signOut(auth);
-    });
+  async function performLogout() {
+    const sessionId = localStorage.getItem("pramaan_session_id");
+    if (sessionId) {
+      try {
+        await fetch(BACKEND_BASE + "/api/auth/logout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId })
+        });
+      } catch (e) {}
+    }
+    await signOut(auth);
   }
+
+  if (btnLogout) btnLogout.addEventListener("click", performLogout);
+  if (sbBtnLogout) sbBtnLogout.addEventListener("click", performLogout);
 </script>
 </body>
 </html>
