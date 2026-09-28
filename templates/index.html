@@ -993,11 +993,15 @@
   if (btnOpenModal) btnOpenModal.addEventListener("click", openModal);
   if (btnCloseModal) btnCloseModal.addEventListener("click", closeModal);
 
+  const BACKEND_BASE = (window.location.hostname.includes("firebaseapp.com") || window.location.hostname.includes("web.app"))
+    ? "https://parmaan-5768.onrender.com"
+    : "";
+
   // Sync token and record active session with Backend & Firestore
   async function syncSession(user) {
     try {
       const idToken = await user.getIdToken(true);
-      const res = await fetch("/api/auth/session", {
+      const res = await fetch(BACKEND_BASE + "/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken })
@@ -1084,7 +1088,7 @@
       const sessionId = localStorage.getItem("pramaan_session_id");
       if (sessionId) {
         try {
-          await fetch("/api/auth/logout", {
+          await fetch(BACKEND_BASE + "/api/auth/logout", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ sessionId })

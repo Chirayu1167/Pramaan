@@ -1,4 +1,4 @@
-﻿// /* PS26237 — front end. Talks only to the existing /api/* endpoints; no data is invented. */
+// /* PS26237 — front end. Talks only to the existing /api/* endpoints; no data is invented. */
 // (() => {
 //   "use strict";
 
@@ -563,23 +563,29 @@
   }
 
   // ---------- API ----------
+  const BACKEND_BASE = (window.location.hostname.includes("firebaseapp.com") || window.location.hostname.includes("web.app"))
+    ? "https://parmaan-5768.onrender.com"
+    : "";
+
   async function api(method, url, body) {
+    const fullUrl = url.startsWith("/") ? BACKEND_BASE + url : url;
     const opts = { method };
     if (body !== undefined) {
       opts.headers = { "Content-Type": "application/json" };
       opts.body = JSON.stringify(body);
     }
-    const res = await fetch(url, opts);
+    const res = await fetch(fullUrl, opts);
     let data;
     try { data = await res.json(); } catch { data = { error: `HTTP ${res.status}` }; }
     if (!res.ok && !data.error) data.error = `HTTP ${res.status}`;
     return data;
   }
   async function apiForm(url, file, extra) {
+    const fullUrl = url.startsWith("/") ? BACKEND_BASE + url : url;
     const fd = new FormData();
     fd.append("file", file);
     if (extra) Object.entries(extra).forEach(([k, v]) => { if (v) fd.append(k, v); });
-    const res = await fetch(url, { method: "POST", body: fd });
+    const res = await fetch(fullUrl, { method: "POST", body: fd });
     let data;
     try { data = await res.json(); } catch { data = { error: `HTTP ${res.status}` }; }
     if (!res.ok && !data.error) data.error = `HTTP ${res.status}`;
@@ -1026,7 +1032,7 @@
     resultEl.innerHTML = `<div class="empty-state"><div class="spinner dark"></div><span>Blind-decoding the pixel lattice, no original needed…</span></div>`;
     const fd = new FormData();
     fd.append("file", shotFileRef);
-    const res = await fetch("/api/investigate/image", { method: "POST", body: fd });
+    const res = await fetch(BACKEND_BASE + "/api/investigate/image", { method: "POST", body: fd });
     let d;
     try { d = await res.json(); } catch { d = { error: `HTTP ${res.status}` }; }
     btn.disabled = false;
