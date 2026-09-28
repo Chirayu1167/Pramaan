@@ -1,0 +1,183 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // HELPER FUNCTIONS & AUTH UTILITIES
+    // ===============================================================
+
+    // Check if request is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check user role from custom claims or user profile doc
+    function hasRole(role) {
+      return isAuthenticated() && 
+        (request.auth.token.role == role || 
+         request.auth.token.roles.hasAny([role]));
+    }
+
+    function isAdmin() {
+      return hasRole('admin') || hasRole('server');
+    }
+
+    function isCustodian() {
+      return hasRole('custodian') || isAdmin();
+    }
+
+    function isAuditor() {
+      return hasRole('auditor') || hasRole('investigator') || isCustodian();
+    }
+
+    function isRecipient(recipientId) {
+      return isAuthenticated() && (request.auth.uid == recipientId || isAdmin());
+    }
+
+    // Rate-limiting / Payload size limit (e.g. 2MB max for standard JSON doc)
+    function isReasonableSize() {
+      return request.resource.size() < 2 * 1024 * 1024;
+    }
+
+    // ===============================================================
+    // 1. ENCRYPTED DOCUMENTS REGISTRY
+    // ===============================================================
+    // Stores document metadata and per-recipient ML-KEM envelopes
+    match /documents/{docId} {
+      // Authenticated users can view document registry metadata
+      allow read: if isAuthenticated();
+
+      // Only authorized encryptors or admins can register new encrypted docs
+      allow create: if (isAdmin() || hasRole('encryptor')) 
+                    && isReasonableSize()
+                    && request.resource.data.keys().hasAll(['doc_id', 'document_hash', 'envelopes', 'created_at']);
+
+      // Documents cannot be edited once encrypted (tamper prevention)
+      allow update: if false;
+
+      // Only admin can archive/delete
+      allow delete: if isAdmin();
+    }
+
+    // ===============================================================
+    // 2. ENCRYPTION ORIGIN REGISTRY (Hardware / PC-ID Bindings)
+    // ===============================================================
+    match /encryption_registry/{recordId} {
+      allow read: if isAuditor();
+      allow create: if (isAdmin() || hasRole('encryptor'))
+                    && request.resource.data.keys().hasAll(['document_hash', 'pc_id', 'timestamp']);
+      allow update, delete: if false; // Immutable origin record
+    }
+
+    // ===============================================================
+    // 3. TAMPER-EVIDENT INTEGRITY LEDGER (Append-Only Hash Chain)
+    // ===============================================================
+    match /ledger/{blockIndex} {
+      // Auditors, custodians, and investigators can read the ledger
+      allow read: if isAuditor() || isAuthenticated();
+
+      // New blocks can only be appended with proper hash-chain structure
+      allow create: if (isAdmin() || isCustodian())
+                    && request.resource.data.keys().hasAll(['index', 'event_id', 'prev_hash', 'block_hash', 'timestamp', 'status'])
+                    && (request.resource.data.status in ['PENDING', 'FINAL']);
+
+      // Blocks can ONLY be updated to append custodian witness signatures (FINAL status)
+      // Modifying event_id, prev_hash, document_hash or copy_hash is strictly FORBIDDEN
+      allow update: if isCustodian()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['witnesses', 'status', 'finalized_at'])
+                    && resource.data.status == 'PENDING'
+                    && request.resource.data.status == 'FINAL'
+                    && request.resource.data.witnesses.size() >= 2;
+
+      // LEDGER BLOCKS CAN NEVER BE DELETED
+      allow delete: if false;
+    }
+
+    // ===============================================================
+    // 4. MERKLE CHECKPOINTS & STATE ROOTS
+    // ===============================================================
+    match /checkpoints/{checkpointId} {
+      allow read: if isAuthenticated();
+      // Only custodian quorum or server can publish monotonic checkpoints
+      allow create: if isCustodian() 
+                    && request.resource.data.keys().hasAll(['checkpoint_index', 'merkle_root', 'custodian_signatures', 'timestamp']);
+      allow update, delete: if false; // Monotonic history, no rollbacks
+    }
+
+    // ===============================================================
+    // 5. PUBLIC RECIPIENTS & IDENTITY REGISTRY (PQC Public Keys)
+    // ===============================================================
+    match /recipients/{recipientId} {
+      // Anyone in organization can read public keys to encrypt for them
+      allow read: if isAuthenticated();
+
+      // Admin or self-enrollment (only public keys and certificates)
+      allow create: if isAdmin() || (isAuthenticated() && request.auth.uid == recipientId);
+      
+      // Update status (e.g. REVOKED) only by admin or authorized custodian
+      allow update: if isAdmin() || (isCustodian() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'revoked_at']));
+      
+      allow delete: if false;
+    }
+
+    // ===============================================================
+    // 6. SINGLE-USE CHALLENGE NONCES (Replay Prevention)
+    // ===============================================================
+    match /challenges/{nonceId} {
+      // Server / recipient can read their active challenge
+      allow read: if isRecipient(resource.data.recipient_id);
+
+      // Created when recipient initiates a decryption request (15 min TTL)
+      allow create: if isAuthenticated() 
+                    && request.resource.data.keys().hasAll(['nonce', 'doc_id', 'recipient_id', 'expires_at', 'used'])
+                    && request.resource.data.used == false;
+
+      // Once used, can only transition from used: false -> used: true
+      allow update: if isAuthenticated()
+                    && resource.data.used == false
+                    && request.resource.data.used == true
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'fulfilled_at', 'signature']);
+
+      allow delete: if isAdmin();
+    }
+
+    // ===============================================================
+    // ===============================================================
+    // 7. FORENSIC EVIDENCE PACKAGES
+    // ===============================================================
+    match /evidence_bundles/{bundleId} {
+      allow read: if isAuditor();
+      allow create: if isAuditor() && isReasonableSize();
+      allow update, delete: if false; // Evidence is immutable once sealed
+    }
+
+    // ===============================================================
+    // 8. USER SESSIONS & ACCESS TOKEN TRACKING
+    // ===============================================================
+    match /user_sessions/{sessionId} {
+      // Users can only read their own sessions; Admin / Server can read all
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+
+      // Authenticated users can register/persist their active session with valid token hash
+      allow create: if isAuthenticated()
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.keys().hasAll(['session_id', 'uid', 'email', 'token_hash', 'status', 'created_at', 'expires_at'])
+                    && request.resource.data.status == 'ACTIVE';
+
+      // Users can update their session (e.g. heartbeat or self-revoke); cannot hijack other user's session
+      allow update: if isAuthenticated() 
+                    && (resource.data.uid == request.auth.uid || isAdmin())
+                    && request.resource.data.uid == resource.data.uid;
+
+      // Sessions are retained for audit and cannot be deleted by standard users
+      allow delete: if isAdmin();
+    }
+
+    // ===============================================================
+    // DEFAULT CATCH-ALL
+    // ===============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

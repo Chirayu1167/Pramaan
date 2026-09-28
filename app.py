@@ -1,4 +1,4 @@
-﻿"""Local web UI for the PS26237 BASE MVP. Runs fully offline (Flask, no CDN)."""
+"""Local web UI for the PS26237 BASE MVP. Runs fully offline (Flask, no CDN)."""
 import io
 import re
 
@@ -532,6 +532,61 @@ def nodes_checkpoint(custodian_id):
         return jsonify({"error": str(e)}), 400
 
 
+# ===============================================================
+# FIREBASE AUTH & SESSION SECURITY APIS
+# ===============================================================
+@app.post("/api/auth/session")
+def auth_create_session():
+    """Validates Firebase ID token (Google Auth or Email/Password) and records active session in Firestore."""
+    try:
+        body = request.get_json(force=True)
+        id_token = body.get("idToken")
+        if not id_token:
+            return jsonify({"error": "idToken is required"}), 400
+        
+        import auth_service
+        ip_addr = request.headers.get("X-Forwarded-For", request.remote_addr or "127.0.0.1").split(",")[0].strip()
+        user_agent = request.headers.get("User-Agent", "Unknown")
+        
+        result = auth_service.register_user_session(
+            id_token=id_token,
+            ip_address=ip_addr,
+            user_agent=user_agent
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": f"Authentication failed: {str(e)}"}), 401
+
+
+@app.get("/api/auth/session/<session_id>")
+def auth_check_session(session_id):
+    """Validates session state directly against Firestore."""
+    try:
+        import auth_service
+        valid, session_data = auth_service.validate_session(session_id)
+        if not valid:
+            return jsonify({"valid": False, "error": "Session invalid or expired"}), 401
+        return jsonify({"valid": True, "session": session_data})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.post("/api/auth/logout")
+def auth_logout():
+    """Revokes active session in Firestore."""
+    try:
+        body = request.get_json(force=True)
+        session_id = body.get("sessionId")
+        if not session_id:
+            return jsonify({"error": "sessionId required"}), 400
+        import auth_service
+        revoked = auth_service.revoke_user_session(session_id)
+        return jsonify({"success": revoked})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
 if __name__ == "__main__":
     store.ensure_dirs()
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=5000, debug=False)
+

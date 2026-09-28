@@ -13,3 +13,7 @@ demo_output_attested/
 .vscode/
 desktop.ini
 Thumbs.db
+.firebase/
+*firebase-adminsdk*.json
+
+
