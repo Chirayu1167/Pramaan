@@ -15,5 +15,8 @@ desktop.ini
 Thumbs.db
 .firebase/
 *firebase-adminsdk*.json
+.env
+.env.local
+
 
 
