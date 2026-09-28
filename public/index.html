@@ -260,42 +260,45 @@
       </div>
 
       <div class="split">
-        <div class="card">
-          <div class="card-head"><div><h2>Open a document</h2><p class="card-sub">Choose the document and the recipient decrypting it.</p></div></div>
-          <div class="card-pad gap-col">
-            <div id="banner-decrypt"></div>
-            <div class="field">
-              <label for="select-doc">Document</label>
-              <select id="select-doc"><option value="">—</option></select>
+        <div class="gap-col">
+          <div class="card">
+            <div class="card-head"><div><h2>Open a document</h2><p class="card-sub">Choose the document and the recipient decrypting it.</p></div></div>
+            <div class="card-pad gap-col">
+              <div id="banner-decrypt"></div>
+              <div class="field">
+                <label for="select-doc">Document</label>
+                <select id="select-doc"><option value="">—</option></select>
+              </div>
+              <div class="field" style="margin-bottom:0">
+                <label for="select-recipient">Recipient</label>
+                <select id="select-recipient"><option value="">—</option></select>
+              </div>
+              <button class="btn btn-primary btn-block mt-8" id="btn-decrypt">
+                <svg class="svg-icon" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.8"/></svg>
+                Challenge, authorize &amp; release (attested)
+              </button>
             </div>
-            <div class="field" style="margin-bottom:0">
-              <label for="select-recipient">Recipient</label>
-              <select id="select-recipient"><option value="">—</option></select>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><div><h2>Custodian actions</h2><p class="card-sub">Witness verification &amp; revocation controls.</p></div></div>
+            <div class="card-pad gap-col">
+              <div id="banner-revoke"></div>
+              <div class="field">
+                <label for="select-revoke-recipient">Revoke recipient</label>
+                <select id="select-revoke-recipient"><option value="">—</option></select>
+              </div>
+              <div class="field" style="margin-bottom:0">
+                <label for="select-revoke-custodian">Authorizing custodian</label>
+                <select id="select-revoke-custodian"><option value="">—</option></select>
+              </div>
+              <button class="btn btn-block mt-8" id="btn-revoke">Revoke (demo-signed)</button>
             </div>
-            <button class="btn btn-primary btn-block mt-8" id="btn-decrypt">
-              <svg class="svg-icon" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.8"/></svg>
-              Challenge, authorize &amp; release (attested)
-            </button>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-head"><div><h2>Custodian actions</h2><p class="card-sub">Witness buttons appear on each PENDING release below. Revocation is custodian-authorized; history stays verifiable.</p></div></div>
-          <div class="card-pad gap-col">
-            <div id="banner-revoke"></div>
-            <div class="field">
-              <label for="select-revoke-recipient">Revoke recipient</label>
-              <select id="select-revoke-recipient"><option value="">—</option></select>
-            </div>
-            <div class="field" style="margin-bottom:0">
-              <label for="select-revoke-custodian">Authorizing custodian</label>
-              <select id="select-revoke-custodian"><option value="">—</option></select>
-            </div>
-            <button class="btn btn-block mt-8" id="btn-revoke">Revoke (demo-signed)</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-head"><div><h2>Decryption certificate</h2><p class="card-sub">Proof of this specific decryption event.</p></div></div>
+          <div class="card-head"><div><h2>Decryption certificate</h2><p class="card-sub">Cryptographic proof of this specific decryption event.</p></div></div>
           <div class="card-pad" id="decrypt-result">
             <div class="empty-state">
               <svg class="svg-icon" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.8"/></svg>
@@ -313,42 +316,45 @@
         <div>
           <div class="view-eyebrow">STEP 03 — LEAK FORENSICS</div>
           <h1 class="view-title">Investigate a leak</h1>
-          <p class="view-desc">Upload a leaked PDF. Its embedded watermark is extracted and matched against the signed ledger to attribute the decryption event it came from.</p>
+          <p class="view-desc">Upload a leaked PDF or screenshot. Its embedded watermark is extracted and matched against the signed ledger to attribute the exact source decryption event.</p>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-pad gap-col">
-          <div id="banner-investigate"></div>
-          <label class="dropzone" id="dropzone-investigate" for="file-investigate">
-            <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg>
-            <span class="dropzone-title">Drop the leaked PDF, TXT, or MD file, or click to browse</span>
-            <span class="dropzone-sub">Analysis runs entirely offline, locally</span>
-            <span class="dropzone-file" id="dropzone-investigate-file"></span>
-          </label>
-          <input type="file" id="file-investigate" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown">
-          <button class="btn btn-primary" id="btn-investigate" disabled style="align-self:flex-start">
-            <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg>
-            Run forensic analysis
-          </button>
+      <div class="split">
+        <div class="card">
+          <div class="card-head"><div><h2>Document analysis</h2><p class="card-sub">Extract watermark token from leaked PDF, TXT, or MD.</p></div></div>
+          <div class="card-pad gap-col">
+            <div id="banner-investigate"></div>
+            <label class="dropzone" id="dropzone-investigate" for="file-investigate">
+              <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg>
+              <span class="dropzone-title">Drop leaked document or click to browse</span>
+              <span class="dropzone-sub">PDF, TXT, or MD &bull; Processed offline</span>
+              <span class="dropzone-file" id="dropzone-investigate-file"></span>
+            </label>
+            <input type="file" id="file-investigate" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown">
+            <button class="btn btn-primary btn-block" id="btn-investigate" disabled>
+              <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg>
+              Run forensic analysis
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div class="card mt-20">
-        <div class="card-head"><div><h2>Screenshot / photo leak</h2><p class="card-sub">Analog hole: upload a PNG/JPEG screenshot or photo of a page. The LatticeMark pixel lattice decodes blind and attributes the same signed event.</p></div></div>
-        <div class="card-pad gap-col">
-          <div id="banner-shot"></div>
-          <label class="dropzone" id="dropzone-shot" for="file-shot">
-            <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg>
-            <span class="dropzone-title">Drop a screenshot (PNG/JPEG) or click to browse</span>
-            <span class="dropzone-sub">Decoded from pixels — no original needed</span>
-            <span class="dropzone-file" id="dropzone-shot-file"></span>
-          </label>
-          <input type="file" id="file-shot" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
-          <button class="btn btn-primary" id="btn-shot" disabled style="align-self:flex-start">
-            <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg>
-            Attribute screenshot
-          </button>
+        <div class="card">
+          <div class="card-head"><div><h2>Screenshot / photo leak</h2><p class="card-sub">Analog hole: LatticeMark pixel lattice decoded blind.</p></div></div>
+          <div class="card-pad gap-col">
+            <div id="banner-shot"></div>
+            <label class="dropzone" id="dropzone-shot" for="file-shot">
+              <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg>
+              <span class="dropzone-title">Drop screenshot (PNG/JPEG) or browse</span>
+              <span class="dropzone-sub">Decoded from pixels &bull; No original needed</span>
+              <span class="dropzone-file" id="dropzone-shot-file"></span>
+            </label>
+            <input type="file" id="file-shot" accept=".png,.jpg,.jpeg,image/png,image/jpeg">
+            <button class="btn btn-primary btn-block" id="btn-shot" disabled>
+              <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/></svg>
+              Attribute screenshot
+            </button>
+          </div>
         </div>
       </div>
 
@@ -552,47 +558,49 @@
 <!-- =============================================================== -->
 <!-- FIREBASE AUTHENTICATION & SESSION MODAL                         -->
 <!-- =============================================================== -->
-<div id="auth-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
-  <div style="background:#111827;border:1px solid #374151;border-radius:12px;width:100%;max-width:420px;padding:24px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);color:#f3f4f6;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h2 style="font-size:18px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px;">
-        <svg class="svg-icon" style="width:20px;height:20px;color:#3b82f6;" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 10-4-1.6-7-5.4-7-10V6l7-3z"/></svg>
+<div id="auth-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(15,23,42,0.75);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:16px;">
+  <div style="background:linear-gradient(180deg,#151824 0%,#0f1118 100%);border:1px solid rgba(255,255,255,0.1);border-radius:18px;width:100%;max-width:420px;padding:28px;box-shadow:0 24px 48px -12px rgba(0,0,0,0.6);color:#f1f5f9;animation:viewFadeIn 0.2s ease;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h2 style="font-size:18px;font-weight:700;margin:0;display:flex;align-items:center;gap:10px;color:#fff;">
+        <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;">
+          <svg class="svg-icon" style="width:17px;height:17px;" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 10-4-1.6-7-5.4-7-10V6l7-3z"/></svg>
+        </div>
         Pramaan Security Access
       </h2>
-      <button id="btn-close-auth-modal" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:20px;">&times;</button>
+      <button id="btn-close-auth-modal" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);color:#94a3b8;cursor:pointer;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;transition:all 0.15s ease;" title="Close">&times;</button>
     </div>
 
     <!-- Google Auth Button -->
-    <button id="btn-auth-google" class="btn" style="width:100%;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:10px;background:#ffffff;color:#1f2937;font-weight:600;border:none;padding:10px;border-radius:6px;cursor:pointer;">
+    <button id="btn-auth-google" class="btn" style="width:100%;margin-bottom:18px;display:flex;align-items:center;justify-content:center;gap:10px;background:#ffffff;color:#0f172a;font-weight:600;font-size:13.5px;border:none;padding:11px 16px;border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
       <svg style="width:18px;height:18px" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
       Continue with Google
     </button>
 
-    <div style="display:flex;align-items:center;margin:16px 0;color:#6b7280;">
-      <hr style="flex:1;border:0;border-top:1px solid #374151;">
-      <span style="padding:0 8px;font-size:12px;text-transform:uppercase;">Or with Email</span>
-      <hr style="flex:1;border:0;border-top:1px solid #374151;">
+    <div style="display:flex;align-items:center;margin:18px 0;color:#64748b;">
+      <hr style="flex:1;border:0;border-top:1px solid rgba(255,255,255,0.08);">
+      <span style="padding:0 10px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;">Or with Email</span>
+      <hr style="flex:1;border:0;border-top:1px solid rgba(255,255,255,0.08);">
     </div>
 
     <!-- Email & Password Form -->
-    <form id="form-auth-email" onsubmit="return false;" style="display:flex;flex-direction:column;gap:12px;">
+    <form id="form-auth-email" onsubmit="return false;" style="display:flex;flex-direction:column;gap:14px;">
       <div>
-        <label style="display:block;font-size:12px;color:#9ca3af;margin-bottom:4px;">Email address</label>
-        <input type="email" id="auth-input-email" required placeholder="user@pramaan.security" style="width:100%;padding:8px 12px;background:#1f2937;border:1px solid #4b5563;border-radius:6px;color:#fff;box-sizing:border-box;">
+        <label style="display:block;font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:6px;">Email address</label>
+        <input type="email" id="auth-input-email" required placeholder="user@pramaan.security" style="width:100%;padding:10px 14px;background:#1e2230;border:1px solid rgba(255,255,255,0.12);border-radius:9px;color:#fff;font-size:13.5px;box-sizing:border-box;">
       </div>
       <div>
-        <label style="display:block;font-size:12px;color:#9ca3af;margin-bottom:4px;">Password</label>
-        <input type="password" id="auth-input-password" required placeholder="••••••••" style="width:100%;padding:8px 12px;background:#1f2937;border:1px solid #4b5563;border-radius:6px;color:#fff;box-sizing:border-box;">
+        <label style="display:block;font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:6px;">Password</label>
+        <input type="password" id="auth-input-password" required placeholder="••••••••" style="width:100%;padding:10px 14px;background:#1e2230;border:1px solid rgba(255,255,255,0.12);border-radius:9px;color:#fff;font-size:13.5px;box-sizing:border-box;">
       </div>
 
-      <div id="auth-error-msg" style="display:none;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.28);color:#fca5a5;font-size:12.5px;line-height:1.4;margin-top:6px;">
+      <div id="auth-error-msg" style="display:none;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.28);color:#fca5a5;font-size:12.5px;line-height:1.4;margin-top:4px;">
         <svg style="width:16px;height:16px;min-width:16px;margin-top:1px;stroke:#ef4444;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
         <span id="auth-error-text"></span>
       </div>
 
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <button type="submit" id="btn-email-signin" class="btn btn-primary" style="flex:1;">Sign In</button>
-        <button type="button" id="btn-email-signup" class="btn" style="flex:1;background:#374151;color:#fff;">Create Account</button>
+      <div style="display:flex;gap:10px;margin-top:6px;">
+        <button type="submit" id="btn-email-signin" class="btn btn-primary" style="flex:1;padding:10px 14px;">Sign In</button>
+        <button type="button" id="btn-email-signup" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.12);padding:10px 14px;">Create Account</button>
       </div>
     </form>
   </div>
