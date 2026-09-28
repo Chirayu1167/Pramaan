@@ -158,6 +158,35 @@ def decrypt():
 
 
 
+def _ensure_nodes(nodes_mod):
+    """Idempotent: create the 3 node identities if missing and refresh their
+    enrollment snapshot. The web app never did this (only demo_attested.py and
+    the tests did), so witnessing failed with 'no signing key stored for node'."""
+    nodes_mod.init_nodes()
+    nodes_mod.sync_enrollment()
+
+
+def _auto_finalize_release(block_index: int):
+    """Demo convenience: collect receipts from the first two independent nodes
+    and finalize the block, exactly as /api/nodes/witness + /api/nodes/aggregate
+    do when clicked by hand. Same signatures, same quorum check, same ledger.
+    Returns (status, witness_ids, error_or_None). Never raises: on any failure
+    the block simply stays PENDING and the manual witness buttons still work."""
+    try:
+        import nodes as nodes_mod
+        _ensure_nodes(nodes_mod)
+        rpkgs = []
+        for cid in nodes_mod.NODE_IDS[:2]:
+            req = nodes_mod.build_witness_request(store.load_ledger(), block_index)
+            req["custodian_id"] = cid
+            rpkgs.append(nodes_mod.witness_request(
+                req, cid, nodes_mod.NODE_PASSPHRASES[cid]))
+        block = nodes_mod.aggregate_receipts(store.load_ledger(), block_index, rpkgs)
+        return block["status"], [w["custodian_id"] for w in block["witnesses"]], None
+    except Exception as e:
+        return "PENDING", [], f"{type(e).__name__}: {e}"
+
+
 @app.post("/api/attested-decrypt")
 def attested_decrypt():
     """Demo simulation of the full v2 ceremony on this host, honestly labeled.
@@ -180,13 +209,20 @@ def attested_decrypt():
             return jsonify({"error": f"unknown recipient {recipient_id!r}"}), 400
         sig = recipient_client_mod.authorize_challenge(chal, recipient_id, passphrase)
         res = core.complete_attested_decryption(chal, sig.hex())
+        status = res["status"]
+        witnesses, auto_error = [], None
+        if status != "FINAL":
+            status, witnesses, auto_error = _auto_finalize_release(res["block_index"])
         return jsonify({
             "event_id": res["event_id"], "recipient_id": res["recipient_id"],
             "doc_id": res["doc_id"], "document_hash": res["document_hash"],
             "watermark_token_hash": res["watermark_token_hash"],
             "copy_hash": res["copy_hash"],
             "timestamp": res["timestamp"], "block_index": res["block_index"],
-            "status": res["status"],
+            "status": status,
+            "auto_finalized": status == "FINAL",
+            "auto_finalize_error": auto_error,
+            "witnesses": witnesses,
             "simulated_device": True,
             "download": f"/api/copy/{res['event_id']}",
         })
@@ -482,6 +518,7 @@ def nodes_witness():
         if not isinstance(index, int) or not isinstance(custodian_id, str):
             return jsonify({"error": "index (int) and custodian_id required"}), 400
         import nodes as nodes_mod
+        _ensure_nodes(nodes_mod)
         try:
             passphrase = nodes_mod.NODE_PASSPHRASES[custodian_id]
         except KeyError:

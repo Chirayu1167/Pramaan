@@ -548,9 +548,15 @@
       if (bannerEl) bannerEl.innerHTML = banner("error", d.error);
       return;
     }
-    if (bannerEl) bannerEl.innerHTML = banner("success", "Authorized release recorded as PENDING — needs 2 custodian witnesses.");
-    renderAttestedRelease(d);
-    toast("Attested release recorded (PENDING)");
+    if (d.status === "FINAL") {
+      if (bannerEl) bannerEl.innerHTML = banner("success", "Authorized release recorded and finalized - your copy is ready to download.");
+      renderAttestedRelease(d);
+      toast("Attested release FINAL - download ready", "check");
+    } else {
+      if (bannerEl) bannerEl.innerHTML = banner("success", "Authorized release recorded as PENDING — needs 2 custodian witnesses.");
+      renderAttestedRelease(d);
+      toast("Attested release recorded (PENDING)");
+    }
     if (window.pramaanHistory) {
       window.pramaanHistory.record("decrypt", {
         doc_id: d.doc_id,
@@ -579,6 +585,7 @@
   function renderAttestedRelease(d, done) {
     window.__lastEventId = d.event_id;
     window.__receipts = [];
+    const isFinal = d.status === "FINAL";
     const decRes = document.getElementById("decrypt-result");
     if (!decRes) return;
     decRes.innerHTML = `
@@ -586,7 +593,9 @@
         <div class="banner banner-info" style="background:var(--paper);border-color:var(--hairline)">
           ${ICON.shield}<span>Attested release for <strong>${esc(d.recipient_id)}</strong> — block <strong>#${d.block_index}</strong> <strong id="release-status">${esc(d.status || "PENDING")}</strong></span>
         </div>
-        <div id="witness-zone">${witnessButtons(d.block_index, done)}</div>
+        <div id="witness-zone">${isFinal
+          ? `<span class="text-muted" style="font-size:12px">Finalized by independent nodes ${esc((d.witnesses || []).join(", "))} (2-of-3 quorum).</span>`
+          : witnessButtons(d.block_index, done)}</div>
         <div class="kv-list">
           ${copyRow("Event ID", d.event_id)}
           ${copyRow("Ledger block", "#" + d.block_index, false)}
@@ -596,7 +605,11 @@
           ${copyRow("Timestamp", d.timestamp, false)}
           ${d.simulated_device ? copyRow("Device step", "simulated recipient device (demo)", false) : ""}
         </div>
-        <div id="download-zone"></div>
+        <div id="download-zone">${isFinal
+          ? `<a class="btn btn-primary btn-block" href="${BACKEND_BASE}/api/copy/${d.event_id}">${ICON.download} Download fingerprinted copy (FINAL)</a>`
+          : `<button class="btn btn-primary btn-block" type="button" disabled aria-describedby="download-status">${ICON.download} Download fingerprinted copy (FINAL)</button>
+          <p class="text-muted" id="download-status" role="status">Available after 2 custodian witnesses finalize this release.</p>`}
+        </div>
       </div>`;
   }
 

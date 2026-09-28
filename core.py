@@ -365,6 +365,21 @@ def _investigate_leak_text_core(leaked_bytes: bytes) -> dict:
         return None
 
     def report_for_hit(hit, token_hash):
+        # _v2_text_route: v2 (attested) blocks carry no v1 signature/signer
+        # fields, so they must be verified by the binding-aware v2 path
+        # (same routing the PDF path already does).
+        if ledger_mod.is_v2_event(hit.get("event")):
+            if invisible_token is None:
+                return {"match": False, "status": "NOT VERIFIED",
+                        "reason": ("visible canary marker matches a v2 event, but v2 "
+                                   "attribution needs the invisible fingerprint to "
+                                   "verify the authorization signature"),
+                        "watermark": "CANARY-ONLY-UNVERIFIABLE",
+                        "channel": "canary-only",
+                        "recipient": hit["event"].get("recipient_id"),
+                        "event_id": hit["event"].get("event_id"),
+                        "conclusion": "No verified decryption event matches this file."}
+            return investigate_leak_v2_core(leaked_bytes)
         # Same signature/ledger verification as the PDF path (see below),
         # applied here to a hit found via either text channel.
         try:

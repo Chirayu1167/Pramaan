@@ -110,6 +110,14 @@ def verify_merkle_proof(leaf_hex: str, proof: list, root_hex: str) -> bool:
 
 
 # ------------------------------------------------------- enrollment ----
+def _derive_key_id(dsa_pk_hex) -> str:
+    """Same fallback core.py uses when a recipient record has no key_id."""
+    try:
+        return prov_mod.key_id_for_dsa_pk(bytes.fromhex(dsa_pk_hex))
+    except Exception:
+        return ""
+
+
 def _enrollment_snapshot() -> dict:
     recips = store.load_recipients()
     return {
@@ -118,7 +126,8 @@ def _enrollment_snapshot() -> dict:
                    "hash": prov_mod.policy_hash()},
         "recipients": {
             rid: {"dsa_pk_hex": (r.get("dsa_pk_hex", "") if isinstance(r, dict) else ""),
-                  "key_id": (r.get("key_id", "") if isinstance(r, dict) else ""),
+                  "key_id": ((r.get("key_id") or _derive_key_id(r.get("dsa_pk_hex", "")))
+                             if isinstance(r, dict) else ""),
                   "status": (r.get("status", "active") if isinstance(r, dict) else "active")}
             for rid, r in recips.items() if isinstance(r, dict)},
     }
