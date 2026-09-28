@@ -820,8 +820,43 @@
   const sbUsername = document.getElementById("sb-username");
   const sbSessionText = document.getElementById("sb-session-text");
 
+  function formatAuthError(err) {
+    if (!err) return "Authentication error occurred.";
+    const code = err.code || "";
+    const msg = err.message || (typeof err === "string" ? err : "");
+    if (code.includes("unauthorized-domain") || msg.includes("unauthorized-domain")) {
+      const host = window.location.hostname || "current domain";
+      return `Domain '${host}' is not authorized. Add '${host}' in Firebase Console → Authentication → Settings → Authorized domains.`;
+    }
+    if (code.includes("invalid-credential") || msg.includes("invalid-credential")) {
+      return "Invalid email or password.";
+    }
+    if (code.includes("email-already-in-use") || msg.includes("email-already-in-use")) {
+      return "An account with this email already exists. Click Sign In instead.";
+    }
+    if (code.includes("weak-password") || msg.includes("weak-password")) {
+      return "Password is too weak. Please use at least 6 characters.";
+    }
+    if (code.includes("user-not-found") || msg.includes("user-not-found")) {
+      return "No account found with this email. Click Create Account first.";
+    }
+    if (code.includes("wrong-password") || msg.includes("wrong-password")) {
+      return "Incorrect password.";
+    }
+    if (code.includes("popup-closed-by-user") || msg.includes("popup-closed-by-user")) {
+      return "Sign-in popup was closed before completing.";
+    }
+    if (code.includes("network-request-failed") || msg.includes("network-request-failed")) {
+      return "Network error. Please check your internet connection.";
+    }
+    return msg.replace(/^Firebase:\s*/i, "").replace(/^Error\s*\((.*?)\)\.?/i, "$1");
+  }
+
   function showError(msg) {
-    if (errorMsg) { errorMsg.textContent = msg; errorMsg.style.display = "block"; }
+    if (errorMsg) {
+      errorMsg.textContent = typeof msg === "object" ? formatAuthError(msg) : (msg.includes("auth/") ? formatAuthError({ message: msg }) : msg);
+      errorMsg.style.display = "block";
+    }
   }
   function clearError() {
     if (errorMsg) { errorMsg.textContent = ""; errorMsg.style.display = "none"; }
@@ -899,7 +934,7 @@
     btnGoogle.addEventListener("click", async () => {
       clearError();
       try { await signInWithPopup(auth, googleProvider); closeModal(); }
-      catch (err) { showError(err.message); }
+      catch (err) { showError(err); }
     });
   }
 
@@ -911,7 +946,7 @@
       const password = inputPassword.value;
       if (!email || !password) { showError("Please enter both email and password."); return; }
       try { await signInWithEmailAndPassword(auth, email, password); closeModal(); }
-      catch (err) { showError(err.message); }
+      catch (err) { showError(err); }
     });
   }
 
@@ -923,7 +958,7 @@
       const password = inputPassword.value;
       if (!email || password.length < 6) { showError("Password must be at least 6 characters."); return; }
       try { await createUserWithEmailAndPassword(auth, email, password); closeModal(); }
-      catch (err) { showError(err.message); }
+      catch (err) { showError(err); }
     });
   }
 
