@@ -195,11 +195,20 @@
   async function loadStatus() {
     const d = await api("GET", "/api/status");
     if (d.error) {
+      // Backend offline/sleeping — immediately clear "Loading..." from dropdowns
+      const selectors = ["select-doc", "select-recipient", "select-revoke-recipient", "select-revoke-custodian"];
+      const emptyLabels = ["No documents — click Initialize first", "No recipients — click Initialize first", "No recipients — click Initialize first", "No custodians — click Initialize first"];
+      selectors.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el && el.options[0] && el.options[0].text === "Loading…") {
+          el.innerHTML = `<option value="">${emptyLabels[i]}</option>`;
+        }
+      });
       const ledgerWrap = document.getElementById("overview-ledger-wrap");
       if (ledgerWrap && !STATE.status) {
-        ledgerWrap.innerHTML = `<div class="empty-state"><span>No events yet — run Initialize or Demo first.</span></div>`;
+        ledgerWrap.innerHTML = `<div class="empty-state"><strong>No events yet</strong><span>Click "Initialize demo recipients" then "Run attested flagship demo".</span></div>`;
       }
-      setTimeout(() => loadStatus(), 6000);
+      setTimeout(() => loadStatus(), 8000);
       return false;
     }
     STATE.status = d;
