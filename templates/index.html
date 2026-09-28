@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PRAMAAN — Proof of Decryption Origin (SIH 26237)</title>
-<link rel="stylesheet" href="css/app.css?v=4.1">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
 <body>
 <div class="app-shell">
@@ -597,7 +597,7 @@
 
 <div class="toast-stack" id="toast-stack"></div>
 
-<script src="js/app.js?v=4.1"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 
 <!-- Firebase App, Auth, Firestore & Session SDK -->
 <script type="module">
