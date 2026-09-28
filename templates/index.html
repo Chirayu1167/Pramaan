@@ -585,7 +585,10 @@
         <input type="password" id="auth-input-password" required placeholder="••••••••" style="width:100%;padding:8px 12px;background:#1f2937;border:1px solid #4b5563;border-radius:6px;color:#fff;box-sizing:border-box;">
       </div>
 
-      <div id="auth-error-msg" style="display:none;color:#ef4444;font-size:12px;margin-top:4px;"></div>
+      <div id="auth-error-msg" style="display:none;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.28);color:#fca5a5;font-size:12.5px;line-height:1.4;margin-top:6px;">
+        <svg style="width:16px;height:16px;min-width:16px;margin-top:1px;stroke:#ef4444;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <span id="auth-error-text"></span>
+      </div>
 
       <div style="display:flex;gap:8px;margin-top:8px;">
         <button type="submit" id="btn-email-signin" class="btn btn-primary" style="flex:1;">Sign In</button>
@@ -821,45 +824,57 @@
   const sbSessionText = document.getElementById("sb-session-text");
 
   function formatAuthError(err) {
-    if (!err) return "Authentication error occurred.";
+    if (!err) return "Unable to complete request. Please try again.";
     const code = err.code || "";
     const msg = err.message || (typeof err === "string" ? err : "");
     if (code.includes("unauthorized-domain") || msg.includes("unauthorized-domain")) {
-      const host = window.location.hostname || "current domain";
-      return `Domain '${host}' is not authorized. Add '${host}' in Firebase Console → Authentication → Settings → Authorized domains.`;
+      return "Access restricted: this local address or domain is not authorized. Please try via localhost or the official deployment URL.";
     }
-    if (code.includes("invalid-credential") || msg.includes("invalid-credential")) {
-      return "Invalid email or password.";
+    if (code.includes("invalid-credential") || code.includes("wrong-password") || msg.includes("invalid-credential") || msg.includes("wrong-password")) {
+      return "Invalid email address or password. Please verify and try again.";
     }
     if (code.includes("email-already-in-use") || msg.includes("email-already-in-use")) {
-      return "An account with this email already exists. Click Sign In instead.";
+      return "An account with this email address already exists. Please sign in instead.";
     }
     if (code.includes("weak-password") || msg.includes("weak-password")) {
-      return "Password is too weak. Please use at least 6 characters.";
+      return "Password should be at least 6 characters long.";
     }
     if (code.includes("user-not-found") || msg.includes("user-not-found")) {
-      return "No account found with this email. Click Create Account first.";
-    }
-    if (code.includes("wrong-password") || msg.includes("wrong-password")) {
-      return "Incorrect password.";
+      return "No account found with this email. Click 'Create Account' to sign up.";
     }
     if (code.includes("popup-closed-by-user") || msg.includes("popup-closed-by-user")) {
-      return "Sign-in popup was closed before completing.";
+      return "Sign-in cancelled before completion.";
     }
     if (code.includes("network-request-failed") || msg.includes("network-request-failed")) {
-      return "Network error. Please check your internet connection.";
+      return "Connection issue. Please check your internet and try again.";
     }
-    return msg.replace(/^Firebase:\s*/i, "").replace(/^Error\s*\((.*?)\)\.?/i, "$1");
+    if (code.includes("too-many-requests") || msg.includes("too-many-requests")) {
+      return "Too many unsuccessful attempts. Please try again in a few moments.";
+    }
+    return "Authentication failed. Please check your details and try again.";
   }
 
   function showError(msg) {
-    if (errorMsg) {
-      errorMsg.textContent = typeof msg === "object" ? formatAuthError(msg) : (msg.includes("auth/") ? formatAuthError({ message: msg }) : msg);
-      errorMsg.style.display = "block";
+    const errEl = document.getElementById("auth-error-msg");
+    const errTxt = document.getElementById("auth-error-text");
+    if (errEl) {
+      const text = typeof msg === "object" ? formatAuthError(msg) : (msg && msg.includes("auth/") ? formatAuthError({ message: msg }) : (msg || "Authentication error"));
+      if (errTxt) {
+        errTxt.textContent = text;
+      } else {
+        errEl.textContent = text;
+      }
+      errEl.style.display = "flex";
     }
   }
   function clearError() {
-    if (errorMsg) { errorMsg.textContent = ""; errorMsg.style.display = "none"; }
+    const errEl = document.getElementById("auth-error-msg");
+    const errTxt = document.getElementById("auth-error-text");
+    if (errTxt) errTxt.textContent = "";
+    if (errEl) {
+      errEl.textContent = "";
+      errEl.style.display = "none";
+    }
   }
   function openModal() { clearError(); if (modal) modal.style.display = "flex"; }
   function closeModal() { if (modal) modal.style.display = "none"; }
