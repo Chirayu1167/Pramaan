@@ -155,6 +155,7 @@
     try {
       if (name === "ledger") renderLedgerTable();
       if (name === "robustness" && typeof renderRobustness === "function") renderRobustness();
+      if (name === "history" && window.pramaanHistory) window.pramaanHistory.reload();
     } catch (e) {
       console.warn("View render error:", e);
     }

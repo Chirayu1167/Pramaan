@@ -645,38 +645,74 @@
     return collection(db, "users", uid, "history");
   }
 
+  function getLocalHistory(uid) {
+    try {
+      return JSON.parse(localStorage.getItem(`pramaan_history_${uid}`) || "[]");
+    } catch { return []; }
+  }
+
+  function setLocalHistory(uid, items) {
+    try {
+      localStorage.setItem(`pramaan_history_${uid}`, JSON.stringify(items.slice(0, 300)));
+    } catch {}
+  }
+
   async function writeHistoryEvent(uid, type, meta) {
+    const item = {
+      type,
+      ...meta,
+      uid,
+      clientTime: new Date().toISOString()
+    };
+    // 1. Instantly save in local storage for zero-latency retrieval
+    const current = getLocalHistory(uid);
+    setLocalHistory(uid, [item, ...current]);
+
+    // 2. Persist to Firestore subcollection
     try {
       await addDoc(historyColRef(uid), {
-        type,
-        ...meta,
-        uid,
-        createdAt: serverTimestamp(),
-        clientTime: new Date().toISOString()
+        ...item,
+        createdAt: serverTimestamp()
       });
     } catch (err) {
-      console.warn("History write failed:", err);
+      console.warn("Firestore history write notice:", err);
     }
   }
 
   async function loadHistory(uid) {
+    const local = getLocalHistory(uid);
     try {
-      const q = query(historyColRef(uid), orderBy("createdAt", "desc"), limit(200));
-      const snap = await getDocs(q);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      let snap;
+      try {
+        const q = query(historyColRef(uid), orderBy("createdAt", "desc"), limit(200));
+        snap = await getDocs(q);
+      } catch (e) {
+        snap = await getDocs(historyColRef(uid));
+      }
+      if (snap && snap.docs && snap.docs.length > 0) {
+        const remote = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        remote.sort((a, b) => {
+          const tA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.clientTime ? new Date(a.clientTime).getTime() : 0);
+          const tB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.clientTime ? new Date(b.clientTime).getTime() : 0);
+          return tB - tA;
+        });
+        setLocalHistory(uid, remote);
+        return remote;
+      }
     } catch (err) {
-      console.warn("History load failed:", err);
-      return [];
+      console.warn("Firestore history load notice:", err);
     }
+    return local;
   }
 
   async function clearHistory(uid) {
+    setLocalHistory(uid, []);
     try {
       const snap = await getDocs(historyColRef(uid));
       const dels = snap.docs.map(d => deleteDoc(doc(db, "users", uid, "history", d.id)));
       await Promise.all(dels);
     } catch (err) {
-      console.warn("History clear failed:", err);
+      console.warn("History clear notice:", err);
     }
   }
 
@@ -727,7 +763,8 @@
       investigate: "🔍",
       screenshot: "📷",
       demo: "▶",
-      init: "⚙"
+      init: "⚙",
+      login: "👤"
     };
     const typeBadge = {
       encrypt: "chip chip-blue",
@@ -735,7 +772,8 @@
       investigate: "chip chip-amber",
       screenshot: "chip chip-amber",
       demo: "chip chip-neutral",
-      init: "chip chip-neutral"
+      init: "chip chip-neutral",
+      login: "chip chip-neutral"
     };
 
     const rows = entries.map(e => {
@@ -743,13 +781,13 @@
       const icon = typeIcon[e.type] || "•";
       const badge = typeBadge[e.type] || "chip chip-neutral";
       const label = e.type.charAt(0).toUpperCase() + e.type.slice(1);
-      const detail = e.filename || e.doc_id || e.recipient_id || e.event_id || e.result || "—";
-      const extra = e.recipients ? `${e.recipients} recipients` : (e.event_id ? `Event: ${e.event_id.slice(0,10)}…` : "");
+      const detail = e.filename || e.doc_id || e.recipient_id || e.event_id || e.result || e.displayName || e.email || "—";
+      const extra = e.recipients ? `${e.recipients} recipients` : (e.event_id ? `Event: ${e.event_id.slice(0,10)}…` : (e.email || ""));
       return `<tr>
-        <td><span class="${badge}" style="font-size:11px">${icon} ${label}</span></td>
+        <td><span class="${badge}" style="font-size:11.5px">${icon} ${label}</span></td>
         <td class="cell-title">${detail}</td>
         <td class="text-muted" style="font-size:12px">${extra}</td>
-        <td class="cell-mono" style="font-size:11px">${time}</td>
+        <td class="cell-mono" style="font-size:11.5px">${time}</td>
       </tr>`;
     }).join("");
 
@@ -764,9 +802,14 @@
     record: async (type, meta = {}) => {
       if (!currentUser) return;
       await writeHistoryEvent(currentUser.uid, type, meta);
-      // Badge on nav item
       const nb = document.getElementById("nav-history");
       if (nb) nb.dataset.badge = "new";
+      // If currently on history view, refresh immediately
+      const hView = document.getElementById("view-history");
+      if (hView && hView.classList.contains("is-active")) {
+        const entries = await loadHistory(currentUser.uid);
+        renderHistoryView(entries);
+      }
     },
     reload: async () => {
       if (!currentUser) { renderHistoryView([]); return; }

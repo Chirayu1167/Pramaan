@@ -34,9 +34,9 @@ service cloud.firestore {
       return isAuthenticated() && (request.auth.uid == recipientId || isAdmin());
     }
 
-    // Rate-limiting / Payload size limit (e.g. 2MB max for standard JSON doc)
+    // Rate-limiting / Payload size helper
     function isReasonableSize() {
-      return request.resource.size() < 2 * 1024 * 1024;
+      return request.resource.data.keys().size() < 100;
     }
 
     // ===============================================================
@@ -173,17 +173,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     } 
 
-        // ===============================================================
+    // ===============================================================
     // 9. PER-USER ACTIVITY HISTORY (My History page)
     // ===============================================================
     match /users/{uid}/history/{eventId} {
-      allow read, delete: if isAuthenticated() && request.auth.uid == uid;
-      allow create: if isAuthenticated()
-                    && request.auth.uid == uid
-                    && request.resource.data.uid == uid
-                    && request.resource.data.type is string
-                    && request.resource.size() < 20 * 1024;
-      allow update: if false;
+      allow read, write, delete: if isAuthenticated() && request.auth.uid == uid;
     }
 
     // ===============================================================
