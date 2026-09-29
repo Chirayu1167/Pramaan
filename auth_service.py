@@ -4,14 +4,6 @@ Handles Google Auth & Email/Password token verification, session tracking,
 and Firestore session persistence to enforce robust operational user security.
 """
 import hashlib
-import os
-import time
-import uuid
-from typing import Optional, Tuple, Dict, Any
-
-import firebase_admin
-from firebase_admin import credentials, auth, firestore
-
 import json
 import os
 import time
