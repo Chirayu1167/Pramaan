@@ -171,6 +171,19 @@ service cloud.firestore {
 
       // Sessions are retained for audit and cannot be deleted by standard users
       allow delete: if isAdmin();
+    } 
+
+        // ===============================================================
+    // 9. PER-USER ACTIVITY HISTORY (My History page)
+    // ===============================================================
+    match /users/{uid}/history/{eventId} {
+      allow read, delete: if isAuthenticated() && request.auth.uid == uid;
+      allow create: if isAuthenticated()
+                    && request.auth.uid == uid
+                    && request.resource.data.uid == uid
+                    && request.resource.data.type is string
+                    && request.resource.size() < 20 * 1024;
+      allow update: if false;
     }
 
     // ===============================================================
